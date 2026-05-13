@@ -52,28 +52,33 @@ function SimpleImageZone({ label, preview, enabled = true, onToggle, onFile, onC
   const dropRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
-  function handleFile(file: File | null | undefined) {
+  const handleFile = useCallback((file: File | null | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) { toast.error("Apenas imagens"); return; }
     onFile(file);
-  }
+  }, [onFile]);
 
   useEffect(() => {
     if (!isFocused) return;
-    function onPaste(e: ClipboardEvent) {
+    const onPaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
-      for (const item of items) {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         if (item.type.startsWith("image/")) {
           const file = item.getAsFile();
-          if (file) { e.preventDefault(); handleFile(file); toast.success("Imagem colada!"); return; }
+          if (file) { 
+            e.preventDefault(); 
+            handleFile(file); 
+            toast.success("Imagem colada!"); 
+            return; 
+          }
         }
       }
-    }
+    };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused]);
+  }, [isFocused, handleFile]);
 
   return (
     <div className="space-y-2">
